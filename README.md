@@ -1,2 +1,19 @@
-# employee-portal
-VOCALINK-TEAM 従業員ポータル
+# VOCALINK-TEAM 従業員ポータル
+
+初版は経費申請マニュアル、申請フォーム、本人の履歴です。HTML、JavaScript、CSSは `site/`、専用DBの初期化SQLは `db/bootstrap.sql` にあります。
+
+## 専用DBと認証の設定
+
+1. ポータル専用のSupabaseプロジェクトを作成し、DBに `db/bootstrap.sql` を一度適用します。
+2. Supabase Authで新規の公開サインアップを無効にし、運営が認めた利用者のアカウントを発行します。発行したAuthユーザーのIDを `public.team_members` に `active` で登録します。
+3. `site/portal-config.js` にそのプロジェクトのURLと公開用キーを設定します。
+4. `site/` だけをWebルートとして配信し、Auth設定のサイトURLを実際のポータルURLに合わせます。SQL、管理用キー、従業員のリスト、証憑はWebルートに置きません。
+5. 検証用アカウントで本人の登録・閲覧、別利用者からの非表示、ログアウト・停止後の拒否を確認します。
+
+領収書本体は指定の保存先に置きます。フォームには任意で証憑のファイル名または管理番号を入力できます。承認担当者向けの操作画面は今後実装します。
+
+## ローカルで開く
+
+`python3 -m http.server 8080 --bind 127.0.0.1 --directory site`
+
+DB接続先を設定するまでは準備中表示になります。公式サイトのDB接続情報は含まれていません。
