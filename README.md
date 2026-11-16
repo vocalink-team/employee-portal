@@ -2,6 +2,8 @@
 
 経費申請マニュアル、申請フォーム、本人の履歴、社内向けお知らせ、Ownerによるメンバーと担当ロールの管理を含みます。サイトの公開用ファイルは `site/` にあります。
 
+[運用手順](docs/operations.md)に、アカウント発行・停止、更新公開、初回公開後の確認項目をまとめています。
+
 ## 専用DBと認証の設定
 
 1. 新規の専用Supabaseプロジェクトでは、`db/bootstrap.sql`、`db/roles.sql`、`db/announcements.sql`、`db/manual.sql` の順に適用します。すでに適用したSQLは再実行しません。
