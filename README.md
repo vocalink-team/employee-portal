@@ -1,12 +1,12 @@
-# VOCALINK-TEAM 従業員ポータル
+# VOCALINK-TEAM 従業員ポータル v0.1.1
 
 初版は経費申請マニュアル、申請フォーム、本人の履歴です。HTML、JavaScript、CSSは `site/`、専用DBの初期化SQLは `db/bootstrap.sql` にあります。
 
 ## 専用DBと認証の設定
 
-1. ポータル専用のSupabaseプロジェクトを作成し、DBに `db/bootstrap.sql` を一度適用します。
+1. 専用Supabaseプロジェクトを作成し、`db/bootstrap.sql` を適用済みです。新しく作り直す場合にだけ、このSQLを適用してください。
 2. Supabase Authで新規の公開サインアップを無効にし、運営が認めた利用者のアカウントを発行します。発行したAuthユーザーのIDを `public.team_members` に `active` で登録します。
-3. `site/portal-config.js` にそのプロジェクトのURLと公開用キーを設定します。
+3. `site/portal-config.js` は専用プロジェクトのURLと公開用キーを設定済みです。
 4. `site/` だけをWebルートとして配信し、Auth設定のサイトURLを実際のポータルURLに合わせます。SQL、管理用キー、従業員のリスト、証憑はWebルートに置きません。
 5. 検証用アカウントで本人の登録・閲覧、別利用者からの非表示、ログアウト・停止後の拒否を確認します。
 
@@ -16,4 +16,4 @@
 
 `python3 -m http.server 8080 --bind 127.0.0.1 --directory site`
 
-DB接続先を設定するまでは準備中表示になります。公式サイトのDB接続情報は含まれていません。
+初期状態では従業員アカウントが未登録です。サイト公開前にAuthで公開サインアップを無効にし、招待した検証用アカウントで操作を確認してください。
