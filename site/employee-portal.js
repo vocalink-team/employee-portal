@@ -24,10 +24,37 @@ if (window.supabase && projectUrl && publishableKey) {
     byId('workspace').hidden = true;
     byId('account').textContent = '';
     byId('account-roles').textContent = '';
+    byId('expense-application').hidden = true;
+    byId('expense-manual-title').textContent = '';
+    byId('expense-manual-steps').replaceChildren();
+    byId('expense-manual-note').textContent = '';
+    byId('manual-status').textContent = '';
     byId('history-list').replaceChildren();
     byId('history-status').textContent = '';
     byId('submit-status').textContent = '';
     expenseForm.reset();
+  }
+
+  async function loadManual(userId) {
+    const message = byId('manual-status');
+    message.textContent = 'マニュアルを読み込んでいます。';
+    const {data, error} = await client.from('employee_manual').select('title,steps,note')
+      .eq('slug', 'expense-application').maybeSingle();
+    if (memberId !== userId) return;
+    if (error || !data) {
+      message.textContent = 'マニュアルを取得できませんでした。ページを再読み込みしてください。';
+      return;
+    }
+    byId('expense-manual-title').textContent = data.title;
+    const steps = data.steps.map(step => {
+      const item = document.createElement('li');
+      item.textContent = step;
+      return item;
+    });
+    byId('expense-manual-steps').replaceChildren(...steps);
+    byId('expense-manual-note').textContent = data.note;
+    byId('expense-application').hidden = false;
+    message.textContent = '';
   }
 
   async function loadHistory(owner) {
@@ -77,6 +104,7 @@ if (window.supabase && projectUrl && publishableKey) {
     status.textContent = '';
     byId('workspace').hidden = false;
     await Promise.all([
+      loadManual(memberId),
       loadHistory(memberId),
       announcements.open(access.data.is_owner),
       access.data.is_owner ? admin.open() : null
