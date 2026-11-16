@@ -20,15 +20,19 @@
 - Ownerは「社内向けお知らせ」で下書き・公開・取り下げを行います。公開すると在籍中のアカウントが閲覧できます。
 - 申請者は経費を入力し、送信後に「自分の申請履歴」で受け付けを確認します。訂正や精算状況は運営担当者に確認します。領収書の本体は、運営が指定する保存先に保管します。
 
-## 更新を公開する
+## GitHub Pagesで更新を公開する
 
-1. GitHubの `main` で対象コミットを確認します。サイト変更時はバージョンを更新します。
-2. 追加のDBマイグレーションがある場合は、内容を確認して専用DBに適用します。
-3. GitHubの同じコミットから `site/` の内容を既存の従業員ポータルの配信用ディレクトリに反映し、公開します。更新作業では使うコミットを記録します。
-4. 公開URLでバージョンとログイン画面を確認します。未ログインでマニュアル・お知らせ・経費が取得できないことを確認します。
-5. 画面側の更新に問題がある場合は直前の配信バージョンに戻せます。DBの変更と互換性を確認してから戻してください。
+1. DBマイグレーションやEdge Functionの変更がある場合は、依存関係を確認して専用Supabaseに反映します。
+2. 画面を変更したらバージョンを更新し、GitHubの `main` に反映します。GitHub Pagesは `main` のルートから配信します。ルートの入口はクエリと初期設定リンクを `site/` に引き継ぎます。
+3. [GitHub Actions](https://github.com/vocalink-team/employee-portal/actions) の「pages build and deployment」が対象コミットで成功したことを確認します。
+4. [公開URL](https://portal.vocalink-team.com/) でHTTPSの接続、ログイン画面と右上のバージョンを確認します。未ログインでマニュアル・お知らせ・経費が取得できないことを確認します。
+5. 画面の変更を取り消すときは、DBとの互換性を確認し、対象のコミットを `main` でrevertして再配信します。
+
+独自ドメインは [GitHub Pages設定](https://github.com/vocalink-team/employee-portal/settings/pages) の `portal.vocalink-team.com` を使用します。Cloudflareの同ホストのCNAMEは `vocalink-team.github.io` を指すDNS専用の設定です。
 
 ## 初回公開後の確認
+
+- [ ] Ownerで検証用アカウントを追加し、初期設定リンクから本人がパスワードを設定してログインできることを確認する。一般メンバーでアカウント追加が表示されないことも確認する。
 
 - [ ] [専用Supabaseの認証設定](https://supabase.com/dashboard/project/cmlafkiwveixvrctnnlx/auth/providers)で「Allow new users to sign up」をオフにして保存し、発行済みアカウントでログインできることを確認する。
 - [ ] PCとスマートフォンで、Ownerの管理画面、一般メンバーのマニュアルと公開済みお知らせ、停止済みアカウントの利用拒否を確認する。
