@@ -1,0 +1,39 @@
+#announcement-status:empty {
+  display: none;
+}
+
+#announcement-form {
+  margin-block: 16px;
+}
+
+#announcement-form h3,
+#announcement-list h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#announcement-list {
+  margin-block-start: 10px;
+}
+
+#announcement-list article {
+  padding-block: 16px;
+}
+
+#announcement-list article + article {
+  border-top: 1px solid #b99a89;
+}
+
+#announcement-list p {
+  overflow-wrap: anywhere;
+}
+
+.announcement-body {
+  white-space: pre-wrap;
+}
+
+.announcement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
