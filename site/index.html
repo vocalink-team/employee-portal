@@ -2,12 +2,12 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self' 'sha256-GefGfZ30UIN7HL/JGL/d2aeI3DdhcSIF7SEssaHNrzg='; connect-src 'self' https://cmlafkiwveixvrctnnlx.supabase.co; img-src 'self' data:">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="version" content="0.1.4">
+<meta name="version" content="0.1.5">
 <meta name="robots" content="noindex, nofollow">
 <title>従業員ポータル | VOCALINK-TEAM</title>
-<link rel="stylesheet" href="vl-ui.css?v=0.1.4">
-<link rel="stylesheet" href="roles.css?v=0.1.4">
-<link rel="stylesheet" href="announcements.css?v=0.1.4">
+<link rel="stylesheet" href="vl-ui.css?v=0.1.5">
+<link rel="stylesheet" href="roles.css?v=0.1.5">
+<link rel="stylesheet" href="announcements.css?v=0.1.5">
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100vh}.wrap{width:min(100% - 36px,860px);margin-inline:auto}header nav,.session{display:flex;align-items:center;justify-content:space-between;gap:12px}main{padding-block:12px 64px}h1{font-size:clamp(26px,5vw,40px);margin-block:0 18px}h2{font-size:22px;margin-block:0 14px}
 section+section{margin-top:32px;padding-top:26px;border-top:1px solid #b99a89}section p{margin-block:4px 14px}.account{font-size:14px;overflow-wrap:anywhere}label{display:block;font-size:14px;font-weight:650;margin-bottom:4px}
@@ -30,12 +30,36 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <button type="submit">ログイン</button>
 </form>
 </section>
+<section id="password-setup" aria-labelledby="password-setup-heading" hidden>
+<h2 id="password-setup-heading">パスワードの初期設定</h2>
+<form id="password-setup-form" class="login-form">
+<div><label for="password-setup-value">新しいパスワード（12文字以上）</label><input type="password" id="password-setup-value" autocomplete="new-password" minlength="12" required></div>
+<div><label for="password-setup-repeat">新しいパスワードの確認</label><input type="password" id="password-setup-repeat" autocomplete="new-password" minlength="12" required></div>
+<button type="submit" id="password-setup-submit">パスワードを設定</button>
+<button type="button" id="password-setup-cancel">ログイン画面へ</button>
+</form>
+<p id="password-setup-status" role="status"></p>
+</section>
 <button id="retry" type="button" hidden>接続を再確認</button>
 <div id="workspace" hidden>
 <div class="session"><span id="account" class="account"></span><button type="button" id="logout">ログアウト</button></div>
 <p class="account" id="account-roles"></p>
 <section id="member-admin" aria-labelledby="member-heading" hidden>
 <h2 id="member-heading">メンバーとロールの管理</h2>
+<details id="create-member-details">
+<summary>アカウントを追加</summary>
+<form id="create-member-form">
+<div><label for="create-member-email">追加するメンバーのメールアドレス</label><input type="email" id="create-member-email" maxlength="254" required></div>
+<button type="submit" id="create-member-submit">アカウントを作成</button>
+</form>
+<p id="create-member-status" role="status"></p>
+<div id="create-member-link-panel" hidden>
+<label for="create-member-link">初期設定リンク</label>
+<input type="url" id="create-member-link" readonly>
+<button type="button" id="create-member-copy">リンクをコピー</button>
+<button type="button" id="create-member-clear">リンクを閉じる</button>
+</div>
+</details>
 <div class="member-actions"><button type="button" id="reload-members">一覧を更新</button></div>
 <p id="member-status" role="status"></p>
 <form id="member-form" hidden>
@@ -107,5 +131,5 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<script type="module" src="employee-portal.js?v=0.1.4"></script>
+<script type="module" src="employee-portal.js?v=0.1.5"></script>
 </body></html>

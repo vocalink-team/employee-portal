@@ -1,6 +1,8 @@
+import { setupAccountCreation } from './account-setup.js?v=0.1.5';
+
 const byId = id => document.getElementById(id);
 
-export function setupMemberAdmin(client) {
+export function setupMemberAdmin(client, projectUrl, publishableKey) {
   const section = byId('member-admin');
   const form = byId('member-form');
   const memberSelect = byId('member-select');
@@ -67,6 +69,8 @@ export function setupMemberAdmin(client) {
     showMember();
   }
 
+  const creation = setupAccountCreation(client, projectUrl, publishableKey, loadMembers);
+
   memberSelect.addEventListener('change', () => {
     message.textContent = '';
     showMember();
@@ -107,6 +111,8 @@ export function setupMemberAdmin(client) {
       section.hidden = true;
       form.hidden = true;
       details.open = false;
+      byId('create-member-details').open = false;
+      creation.clear();
       members.clear();
       options.replaceChildren();
       memberSelect.replaceChildren();

@@ -1,5 +1,6 @@
 import { setupAnnouncements } from './announcements.js?v=0.1.3';
-import { setupMemberAdmin } from './member-admin.js?v=0.1.2';
+import { setupMemberAdmin } from './member-admin.js?v=0.1.5';
+import { openPasswordSetup } from './account-setup.js?v=0.1.5';
 import { projectUrl, publishableKey } from './portal-config.js';
 const byId = id => document.getElementById(id);
 const status = byId('portal-status');
@@ -12,7 +13,7 @@ let pending = null;
 
 if (window.supabase && projectUrl && publishableKey) {
   const client = window.supabase.createClient(projectUrl, publishableKey);
-  const admin = setupMemberAdmin(client);
+  const admin = setupMemberAdmin(client, projectUrl, publishableKey);
   const announcements = setupAnnouncements(client);
   const requests = () => client.from('employee_expense_requests');
 
@@ -193,7 +194,7 @@ if (window.supabase && projectUrl && publishableKey) {
       button.disabled = false;
     }
   });
-  await refresh();
+  if (!openPasswordSetup(window.supabase.createClient, projectUrl, publishableKey, refresh)) await refresh();
 } else {
   status.textContent = projectUrl && publishableKey
     ? 'ログイン画面を読み込めませんでした。ページを再読み込みしてください。'
