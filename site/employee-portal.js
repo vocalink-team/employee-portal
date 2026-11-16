@@ -1,3 +1,4 @@
+import { setupMemberAdmin } from './member-admin.js?v=0.1.2';
 import { projectUrl, publishableKey } from './portal-config.js';
 const byId = id => document.getElementById(id);
 const status = byId('portal-status');
@@ -10,13 +11,16 @@ let pending = null;
 
 if (window.supabase && projectUrl && publishableKey) {
   const client = window.supabase.createClient(projectUrl, publishableKey);
+  const admin = setupMemberAdmin(client);
   const requests = () => client.from('employee_expense_requests');
 
   function clearWorkspace() {
+    admin.clear();
     memberId = null;
     pending = null;
     byId('workspace').hidden = true;
     byId('account').textContent = '';
+    byId('account-roles').textContent = '';
     byId('history-list').replaceChildren();
     byId('history-status').textContent = '';
     byId('submit-status').textContent = '';
@@ -47,17 +51,17 @@ if (window.supabase && projectUrl && publishableKey) {
     clearWorkspace();
     const {data, error} = await client.auth.getUser();
     if (error || !data.user) {
-      status.textContent = '公式サイトのアカウントでログインしてください。';
+      status.textContent = '従業員ポータルのアカウントでログインしてください。';
       byId('login').hidden = false;
       return;
     }
-    const access = await client.rpc('is_active_employee');
+    const access = await client.rpc('employee_portal_profile');
     if (access.error) {
       status.textContent = '在籍状況を確認できませんでした。時間をおいて再確認してください。';
       byId('retry').hidden = false;
       return;
     }
-    if (access.data !== true) {
+    if (access.data?.is_active !== true) {
       await client.auth.signOut({scope: 'local'});
       status.textContent = 'このアカウントには従業員ポータルの利用権限がありません。';
       byId('login').hidden = false;
@@ -65,10 +69,11 @@ if (window.supabase && projectUrl && publishableKey) {
     }
     memberId = data.user.id;
     byId('account').textContent = data.user.email || 'ログイン中';
+    byId('account-roles').textContent = access.data.roles.join(' ／ ');
     byId('spent-on').max = dateInJapan();
     status.textContent = '';
     byId('workspace').hidden = false;
-    await loadHistory(memberId);
+    await Promise.all([loadHistory(memberId), access.data.is_owner ? admin.open() : null]);
   }
 
   loginForm.addEventListener('submit', async event => {

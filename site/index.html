@@ -2,10 +2,11 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self' 'sha256-EPjc+yM9asNFtxKhT4WXAw4yX7EUGwqrrSLr/16trzY='; connect-src 'self' https://cmlafkiwveixvrctnnlx.supabase.co; img-src 'self' data:">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="version" content="0.1.1">
+<meta name="version" content="0.1.2">
 <meta name="robots" content="noindex, nofollow">
 <title>従業員ポータル | VOCALINK-TEAM</title>
-<link rel="stylesheet" href="vl-ui.css?v=0.1.1">
+<link rel="stylesheet" href="vl-ui.css?v=0.1.2">
+<link rel="stylesheet" href="roles.css?v=0.1.2">
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100vh}.wrap{width:min(100% - 36px,860px);margin-inline:auto}header nav,.session{display:flex;align-items:center;justify-content:space-between;gap:12px}main{padding-block:12px 64px}h1{font-size:clamp(26px,5vw,40px);margin-block:0 18px}h2{font-size:22px;margin-block:0 14px}
 section+section{margin-top:32px;padding-top:26px;border-top:1px solid #b99a89}section p{margin-block:4px 14px}.account{font-size:14px;overflow-wrap:anywhere}label{display:block;font-size:14px;font-weight:650;margin-bottom:4px}
@@ -31,6 +32,22 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <button id="retry" type="button" hidden>接続を再確認</button>
 <div id="workspace" hidden>
 <div class="session"><span id="account" class="account"></span><button type="button" id="logout">ログアウト</button></div>
+<p class="account" id="account-roles"></p>
+<section id="member-admin" aria-labelledby="member-heading" hidden>
+<h2 id="member-heading">メンバーとロールの管理</h2>
+<div class="member-actions"><button type="button" id="reload-members">一覧を更新</button></div>
+<p id="member-status" role="status"></p>
+<form id="member-form" hidden>
+<div class="fields">
+<div><label for="member-select">アカウント</label><select id="member-select" required></select></div>
+<div><label for="access-select">利用状態</label><select id="access-select" required>
+<option value="active">利用可</option><option value="suspended">停止</option>
+</select></div>
+</div>
+<details id="role-details"><summary>担当ロールを選ぶ</summary><div id="role-options"></div></details>
+<button type="submit">変更を保存</button>
+</form>
+</section>
 <section aria-labelledby="manual-heading">
 <h2 id="manual-heading">マニュアル</h2>
 <ul class="manual-links">
@@ -64,5 +81,5 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<script type="module" src="employee-portal.js?v=0.1.1"></script>
+<script type="module" src="employee-portal.js?v=0.1.2"></script>
 </body></html>
