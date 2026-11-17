@@ -1,3 +1,4 @@
+import { setupOwnerExpenses } from './owner-expenses.js?v=0.1.8';
 import { setupAnnouncements } from './announcements.js?v=0.1.3';
 import { setupMemberAdmin } from './member-admin.js?v=0.1.7';
 import { openPasswordSetup } from './account-setup.js?v=0.1.7';
@@ -15,11 +16,13 @@ if (window.supabase && projectUrl && publishableKey) {
   const client = window.supabase.createClient(projectUrl, publishableKey);
   const admin = setupMemberAdmin(client, projectUrl, publishableKey);
   const announcements = setupAnnouncements(client);
+  const ownerExpenses = setupOwnerExpenses(client, currency);
   const requests = () => client.from('employee_expense_requests');
 
   function clearWorkspace() {
     admin.clear();
     announcements.clear();
+    ownerExpenses.clear();
     memberId = null;
     pending = null;
     byId('workspace').hidden = true;
@@ -108,7 +111,8 @@ if (window.supabase && projectUrl && publishableKey) {
       loadManual(memberId),
       loadHistory(memberId),
       announcements.open(access.data.is_owner),
-      access.data.is_owner ? admin.open() : null
+      access.data.is_owner ? admin.open() : null,
+      access.data.is_owner ? ownerExpenses.open() : null
     ]);
   }
 

@@ -1,0 +1,33 @@
+#owner-expense-status:empty {
+  display: none;
+}
+
+#owner-expense-list {
+  list-style: none;
+  padding: 0;
+  margin-block: 14px;
+}
+
+#owner-expense-list li {
+  padding-block: 12px;
+  overflow-wrap: anywhere;
+}
+
+#owner-expense-list li + li {
+  border-top: 1px solid #b99a89;
+}
+
+#owner-expense-list summary {
+  min-height: 44px;
+  padding-block: 10px;
+  cursor: pointer;
+}
+
+#owner-expense-list dt {
+  font-weight: 650;
+}
+
+#owner-expense-list dd {
+  margin: 4px 0 14px;
+  white-space: pre-wrap;
+}
