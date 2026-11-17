@@ -32,12 +32,12 @@ Ownerは「経費申請一覧」で全メンバーの申請を新しい順に閲
 
 ## お知らせをDiscordへ通知する
 
-1. 専用Supabaseに [通知用SQL](../db/announcement_discord.sql) を適用します。続けて [本文配信用SQL](../db/announcement_discord_content.sql) を適用します。前提は `db/announcements.sql` の適用です。
+1. 専用Supabaseに [通知用SQL](../db/announcement_discord.sql) を適用します。続けて [本文配信用SQL](../db/announcement_discord_content.sql) と [メンション用SQL](../db/announcement_discord_mentions.sql) を適用します。前提は `db/announcements.sql` の適用です。
 2. Discordの社内通知チャンネルで「チャンネルを編集」→「連携サービス」→「ウェブフック」からWebhookを作成し、URLをコピーします。
 3. [専用Supabaseの連携設定](https://supabase.com/dashboard/project/cmlafkiwveixvrctnnlx/integrations) →「Vault」→「Secrets」で、名前を `employee_portal_discord_webhook`、値をコピーしたWebhook URLとして保存します。Webhook URLはVaultに直接入力します。
 4. Ownerが新しいお知らせを公開し、Discordにタイトル・本文・ポータルのリンクが届くことを確認します。配信処理は15秒間隔です。
 
-同じお知らせは初回公開時に配信対象になります。長い本文は複数のメッセージに分けて送信します。本文にメンションが含まれていても、メンション通知は送りません。配信前に取り下げたお知らせは送信対象から外れます。配信済みの投稿を編集・取り下げる場合は、Discord側でも対応してください。設定前に公開したお知らせの遡及配信や、失敗時の自動再送はありません。配信状況は専用SupabaseのSQL Editorで確認できます。
+同じお知らせは初回公開時に配信対象になります。長い本文は複数のメッセージに分けて送信します。Ownerは作成フォームの「Discordのメンションを指定」に通知したいユーザーIDまたはロールIDを入力できます。最初のDiscord投稿で指定先へ通知します。ロールはDiscord側でメンションできる設定にしてください。配信前に取り下げたお知らせは送信対象から外れます。配信済みの投稿を編集・取り下げる場合は、Discord側でも対応してください。設定前に公開したお知らせの遡及配信や、失敗時の自動再送はありません。配信状況は専用SupabaseのSQL Editorで確認できます。
 
 ```sql
 select announcement_id, recorded_at, state, http_status

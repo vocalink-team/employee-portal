@@ -1,6 +1,22 @@
 const byId = id => document.getElementById(id);
 const pageSize = 10;
 const fields = 'id,title,body,published,published_at,updated_at';
+const mentionFields = 'discord_user_ids,discord_role_ids';
+
+function discordIds(value, type) {
+  const pattern = type === 'role'
+    ? /^(?:([1-9]\d{16,19})|<@&([1-9]\d{16,19})>)$/
+    : /^(?:([1-9]\d{16,19})|<@!?([1-9]\d{16,19})>)$/;
+  const ids = new Set();
+  for (const token of value.trim().split(/[\s,、]+/).filter(Boolean)) {
+    const match = token.match(pattern);
+    if (!match) throw new Error('Invalid Discord mention');
+    ids.add(match[1] ?? match[2]);
+    if (ids.size > 10) throw new Error('Too many Discord mentions');
+  }
+  return [...ids];
+}
+
 const formatDate = new Intl.DateTimeFormat('ja-JP', {dateStyle: 'medium', timeZone: 'Asia/Tokyo'});
 
 function createAnnouncementId() {
@@ -18,6 +34,8 @@ export function setupAnnouncements(client) {
   const form = byId('announcement-form');
   const title = byId('announcement-title');
   const body = byId('announcement-body');
+  const users = byId('announcement-discord-users');
+  const roles = byId('announcement-discord-roles');
   const message = byId('announcement-status');
   const list = byId('announcement-list');
   const previous = byId('announcement-prev');
@@ -41,6 +59,8 @@ export function setupAnnouncements(client) {
     byId('announcement-form-heading').textContent = article ? 'お知らせを編集' : 'お知らせを作成';
     title.value = article?.title ?? '';
     body.value = article?.body ?? '';
+    users.value = (article?.discord_user_ids ?? []).join(', ');
+    roles.value = (article?.discord_role_ids ?? []).join(', ');
     form.querySelector('[value="draft"]').textContent = article?.published ? '公開を取り下げる' : '下書き保存';
     form.querySelector('[value="publish"]').textContent = article?.published ? '公開内容を更新' : '公開する';
     form.hidden = false;
@@ -78,7 +98,7 @@ export function setupAnnouncements(client) {
     message.textContent = 'お知らせを読み込んでいます。';
     list.replaceChildren();
     byId('announcement-pages').hidden = true;
-    const {data, error} = await articles().select(fields)
+    const {data, error} = await articles().select(owner ? fields + ',' + mentionFields : fields)
       .order('published_at', {ascending: false, nullsFirst: false})
       .order('updated_at', {ascending: false})
       .order('id', {ascending: true})
@@ -121,6 +141,13 @@ export function setupAnnouncements(client) {
       message.textContent = 'タイトルと本文を入力してください。';
       return;
     }
+    try {
+      payload.discord_user_ids = discordIds(users.value, 'user');
+      payload.discord_role_ids = discordIds(roles.value, 'role');
+    } catch {
+      message.textContent = 'DiscordのユーザーIDとロールIDを確認してください。各欄に10件まで指定できます。';
+      return;
+    }
     saving = true;
     const request = ++revision;
     const controls = [...form.elements];
@@ -135,10 +162,12 @@ export function setupAnnouncements(client) {
       let {data, error} = await query.select('id').maybeSingle();
       if (request !== revision) return;
       if (error || !data) {
-        const check = await articles().select('id,title,body,published').eq('id', edit.id).maybeSingle();
+        const check = await articles().select('id,title,body,published,' + mentionFields).eq('id', edit.id).maybeSingle();
         if (request !== revision) return;
         data = check.data;
-        if (check.error || !data || Object.entries(payload).some(([key, value]) => data[key] !== value)) {
+        if (check.error || !data || Object.entries(payload).some(([key, value]) => (
+          Array.isArray(value) ? JSON.stringify(data[key]) !== JSON.stringify(value) : data[key] !== value
+        ))) {
           message.textContent = !error && data ? '別の操作で内容が更新されました。ページを再読み込みして確認してください。' :
             '保存を確認できませんでした。入力内容を確認して、もう一度お試しください。';
           return;
