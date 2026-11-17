@@ -20,6 +20,22 @@
 - Ownerは「社内向けお知らせ」で下書き・公開・取り下げを行います。公開すると在籍中のアカウントが閲覧できます。
 - 申請者は経費を入力し、送信後に「自分の申請履歴」で受け付けを確認します。訂正や精算状況は運営担当者に確認します。領収書の本体は、運営が指定する保存先に保管します。
 
+## お知らせをDiscordへ通知する
+
+1. 専用Supabaseに [通知用SQL](../db/announcement_discord.sql) を適用します。前提は `db/announcements.sql` の適用です。
+2. Discordの社内通知チャンネルで「チャンネルを編集」→「連携サービス」→「ウェブフック」からWebhookを作成し、URLをコピーします。
+3. [専用Supabaseの連携設定](https://supabase.com/dashboard/project/cmlafkiwveixvrctnnlx/integrations) →「Vault」→「Secrets」で、名前を `employee_portal_discord_webhook`、値をコピーしたWebhook URLとして保存します。Webhook URLはVaultに直接入力します。
+4. Ownerが新しいお知らせを公開し、Discordに定型文とポータルのリンクが届くことを確認します。配信処理は15秒間隔です。
+
+同じお知らせは初回公開時に1件だけ登録されます。タイトル・本文・メンションは送信されません。公開後に配信前の取り下げを検知した場合はスキップします。設定前に公開したお知らせの遡及配信や、失敗時の自動再送はありません。配信状況は専用SupabaseのSQL Editorで確認できます。
+
+```sql
+select announcement_id, recorded_at, state, http_status
+from private.announcement_discord_deliveries
+order by recorded_at desc
+limit 20;
+```
+
 ## GitHub Pagesで更新を公開する
 
 1. DBマイグレーションやEdge Functionの変更がある場合は、依存関係を確認して専用Supabaseに反映します。
