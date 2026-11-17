@@ -2,13 +2,13 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self' 'sha256-GefGfZ30UIN7HL/JGL/d2aeI3DdhcSIF7SEssaHNrzg='; connect-src 'self' https://cmlafkiwveixvrctnnlx.supabase.co; img-src 'self' data:">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="version" content="0.1.8">
+<meta name="version" content="0.1.9">
 <meta name="robots" content="noindex, nofollow">
 <title>従業員ポータル | VOCALINK-TEAM</title>
 <link rel="stylesheet" href="vl-ui.css?v=0.1.7">
 <link rel="stylesheet" href="roles.css?v=0.1.5">
 <link rel="stylesheet" href="announcements.css?v=0.1.5">
-<link rel="stylesheet" href="owner-expenses.css?v=0.1.8">
+<link rel="stylesheet" href="owner-expenses.css?v=0.1.9">
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100vh}.wrap{width:min(100% - 36px,860px);margin-inline:auto}header nav,.session{display:flex;align-items:center;justify-content:space-between;gap:12px}main{padding-block:12px 64px}h1{font-size:clamp(26px,5vw,40px);margin-block:0 18px}h2{font-size:22px;margin-block:0 14px}
 section+section{margin-top:32px;padding-top:26px;border-top:1px solid #b99a89}section p{margin-block:4px 14px}.account{font-size:14px;overflow-wrap:anywhere}label{display:block;font-size:14px;font-weight:650;margin-bottom:4px}
@@ -19,7 +19,7 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 @media(max-width:560px){.fields{grid-template-columns:1fr}.session{align-items:flex-start}header nav{min-height:0}}
 </style><meta name="referrer" content="strict-origin-when-cross-origin"></head>
 <body class="vl-ui">
-<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.8">v0.1.8</small></nav></div></header>
+<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.9">v0.1.9</small></nav></div></header>
 <main class="wrap">
 <h1>従業員ポータル</h1>
 <p id="portal-status" role="status">ログイン状態を確認しています。</p>
@@ -134,7 +134,10 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 <div><label for="purpose">用途</label><textarea id="purpose" name="purpose" maxlength="500" required></textarea></div>
 <div><label for="receipt">証憑のファイル名・管理番号（任意）</label><input id="receipt" name="evidence_reference" maxlength="300"></div>
-<button type="submit">申請する</button>
+<div class="announcement-actions">
+<button type="submit" id="expense-submit">申請する</button>
+<button type="button" id="expense-edit-cancel" hidden>修正をやめる</button>
+</div>
 </form>
 <p id="submit-status" role="status"></p>
 </section>
@@ -142,6 +145,10 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <h2 id="history-heading">自分の申請履歴</h2>
 <p id="history-status" role="status"></p>
 <ol id="history-list"></ol>
+<div id="history-pages" class="announcement-actions" hidden>
+<button type="button" id="history-previous">前へ</button>
+<button type="button" id="history-next">次へ</button>
+</div>
 </section>
 <section id="owner-expenses" aria-labelledby="owner-expenses-heading" hidden>
 <h2 id="owner-expenses-heading">経費申請一覧</h2>
@@ -156,5 +163,5 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<script type="module" src="employee-portal.js?v=0.1.8"></script>
+<script type="module" src="employee-portal.js?v=0.1.9"></script>
 </body></html>

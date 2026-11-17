@@ -1,4 +1,4 @@
-import { setupOwnerExpenses } from './owner-expenses.js?v=0.1.8';
+import { expenseStatusLabel, setupOwnerExpenses } from './owner-expenses.js?v=0.1.9';
 import { setupAnnouncements } from './announcements.js?v=0.1.3';
 import { setupMemberAdmin } from './member-admin.js?v=0.1.7';
 import { openPasswordSetup } from './account-setup.js?v=0.1.7';
@@ -7,17 +7,32 @@ const byId = id => document.getElementById(id);
 const status = byId('portal-status');
 const loginForm = byId('login-form');
 const expenseForm = byId('expense-form');
+const expenseSubmit = byId('expense-submit');
+const historyPrevious = byId('history-previous');
+const historyNext = byId('history-next');
+const HISTORY_PAGE_SIZE = 20;
 const dateInJapan = () => new Intl.DateTimeFormat('sv-SE', {timeZone: 'Asia/Tokyo'}).format(new Date());
 const currency = new Intl.NumberFormat('ja-JP', {style: 'currency', currency: 'JPY'});
 let memberId = null;
 let pending = null;
+let editingExpense = null;
+let historyPage = 0;
+let historyHasMore = false;
+let historyRevision = 0;
 
 if (window.supabase && projectUrl && publishableKey) {
   const client = window.supabase.createClient(projectUrl, publishableKey);
   const admin = setupMemberAdmin(client, projectUrl, publishableKey);
   const announcements = setupAnnouncements(client);
-  const ownerExpenses = setupOwnerExpenses(client, currency);
+  const ownerExpenses = setupOwnerExpenses(client, currency, () => loadHistory(memberId, historyPage));
   const requests = () => client.from('employee_expense_requests');
+
+  function resetExpenseForm() {
+    editingExpense = null;
+    expenseForm.reset();
+    expenseSubmit.textContent = '申請する';
+    byId('expense-edit-cancel').hidden = true;
+  }
 
   function clearWorkspace() {
     admin.clear();
@@ -33,10 +48,14 @@ if (window.supabase && projectUrl && publishableKey) {
     byId('expense-manual-steps').replaceChildren();
     byId('expense-manual-note').textContent = '';
     byId('manual-status').textContent = '';
+    historyRevision++;
+    historyPage = 0;
+    historyHasMore = false;
+    byId('history-pages').hidden = true;
     byId('history-list').replaceChildren();
     byId('history-status').textContent = '';
     byId('submit-status').textContent = '';
-    expenseForm.reset();
+    resetExpenseForm();
   }
 
   async function loadManual(userId) {
@@ -61,23 +80,82 @@ if (window.supabase && projectUrl && publishableKey) {
     message.textContent = '';
   }
 
-  async function loadHistory(owner) {
+  function beginExpenseEdit(row) {
+    if (!memberId || expenseSubmit.disabled) return;
+    if (pending) {
+      byId('history-status').textContent = '先に送信中の申請を確認してください。';
+      return;
+    }
+    editingExpense = row;
+    for (const [name, input] of [
+      ['spent_on', 'spent-on'], ['category', 'category'], ['amount_yen', 'amount'],
+      ['payee', 'payee'], ['purpose', 'purpose'], ['evidence_reference', 'receipt']
+    ]) {
+      byId(input).value = row[name] ?? '';
+    }
+    expenseSubmit.textContent = '再申請する';
+    byId('expense-edit-cancel').hidden = false;
+    byId('submit-status').textContent = '差し戻し理由：' + row.return_reason;
+    byId('spent-on').focus();
+  }
+
+  byId('expense-edit-cancel').addEventListener('click', () => {
+    if (expenseSubmit.disabled) return;
+    resetExpenseForm();
+    byId('submit-status').textContent = '';
+  });
+
+  async function loadHistory(owner, page = 0) {
+    if (!owner) return;
+    const request = ++historyRevision;
+    historyPrevious.disabled = historyNext.disabled = true;
+    const offset = page * HISTORY_PAGE_SIZE;
     const {data, error} = await requests()
-      .select('id,spent_on,category,amount_yen,payee')
-      .order('submitted_at', {ascending: false}).order('id', {ascending: false}).limit(20);
-    if (memberId !== owner) return;
+      .select('id,spent_on,category,amount_yen,payee,purpose,evidence_reference,status,return_reason,status_version')
+      .order('submitted_at', {ascending: false}).order('id', {ascending: false})
+      .range(offset, offset + HISTORY_PAGE_SIZE);
+    if (memberId !== owner || request !== historyRevision) return;
+    if (error) {
+      byId('history-status').textContent = '申請履歴を取得できませんでした。';
+      historyPrevious.disabled = historyPage === 0;
+      historyNext.disabled = !historyHasMore;
+      return;
+    }
+    historyPage = page;
     const list = byId('history-list');
     list.replaceChildren();
-    byId('history-status').textContent = error ? '申請履歴を取得できませんでした。' :
-      data.length ? '直近20件まで表示しています。' : '申請履歴はありません。';
-    if (error) return;
+    historyHasMore = data.length > HISTORY_PAGE_SIZE;
+    byId('history-pages').hidden = !page && !historyHasMore;
+    historyPrevious.disabled = page === 0;
+    historyNext.disabled = !historyHasMore;
+    byId('history-status').textContent = data.length ? '' : '申請履歴はありません。';
     const labels = new Map([...byId('category').options].map(option => [option.value, option.textContent]));
-    for (const row of data) {
+    for (const row of data.slice(0, HISTORY_PAGE_SIZE)) {
       const item = document.createElement('li');
-      item.textContent = [row.spent_on, labels.get(row.category), row.payee, currency.format(row.amount_yen)].join(' ／ ');
+      const summary = document.createElement('div');
+      summary.textContent = [
+        row.spent_on, labels.get(row.category), row.payee, currency.format(row.amount_yen), expenseStatusLabel(row.status)
+      ].join(' ／ ');
+      item.append(summary);
+      if (row.status === 'returned') {
+        const reason = document.createElement('p');
+        reason.textContent = '差し戻し理由：' + row.return_reason;
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.textContent = '修正して再申請';
+        edit.addEventListener('click', () => beginExpenseEdit(row));
+        item.append(reason, edit);
+      }
       list.append(item);
     }
   }
+
+  historyPrevious.addEventListener('click', () => {
+    if (historyPage > 0) void loadHistory(memberId, historyPage - 1);
+  });
+  historyNext.addEventListener('click', () => {
+    if (historyHasMore) void loadHistory(memberId, historyPage + 1);
+  });
 
   async function refresh() {
     byId('retry').hidden = true;
@@ -149,7 +227,7 @@ if (window.supabase && projectUrl && publishableKey) {
 
   expenseForm.addEventListener('submit', async event => {
     event.preventDefault();
-    const button = expenseForm.querySelector('button');
+    const button = expenseSubmit;
     const message = byId('submit-status');
     const owner = memberId;
     if (!owner || button.disabled) return;
@@ -169,6 +247,23 @@ if (window.supabase && projectUrl && publishableKey) {
     const signature = JSON.stringify(payload);
     button.disabled = true;
     try {
+      if (editingExpense) {
+        const {error} = await client.rpc('employee_resubmit_expense', {
+          expense_id: editingExpense.id, expected_version: editingExpense.status_version, expense_data: payload
+        });
+        if (memberId !== owner) return;
+        if (error) {
+          message.textContent = error.code === '40001'
+            ? '申請の状態が変わりました。履歴で現在の状態を確認してください。'
+            : '再申請できませんでした。入力内容を確認してください。';
+          if (error.code === '40001') await loadHistory(owner, historyPage);
+          return;
+        }
+        resetExpenseForm();
+        message.textContent = '再申請を受け付けました。';
+        await loadHistory(owner, historyPage);
+        return;
+      }
       if (pending && pending.signature !== signature) {
         const check = await requests().select('id').eq('id', pending.id).maybeSingle();
         if (memberId !== owner) return;
