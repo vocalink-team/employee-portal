@@ -3,6 +3,16 @@ const pageSize = 10;
 const fields = 'id,title,body,published,published_at,updated_at';
 const formatDate = new Intl.DateTimeFormat('ja-JP', {dateStyle: 'medium', timeZone: 'Asia/Tokyo'});
 
+function createAnnouncementId() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return crypto.randomUUID();
+
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+  return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
+}
+
 export function setupAnnouncements(client) {
   const admin = byId('announcement-admin');
   const form = byId('announcement-form');
@@ -27,7 +37,7 @@ export function setupAnnouncements(client) {
 
   function editArticle(article, trigger) {
     if (!owner || saving) return;
-    edit = article ?? {id: crypto.randomUUID()};
+    edit = article ?? {};
     byId('announcement-form-heading').textContent = article ? 'お知らせを編集' : 'お知らせを作成';
     title.value = article?.title ?? '';
     body.value = article?.body ?? '';
@@ -118,6 +128,7 @@ export function setupAnnouncements(client) {
     message.textContent = '保存しています。';
     let savedMessage;
     try {
+      edit.id ??= createAnnouncementId();
       const query = edit.updated_at ?
         articles().update(payload).eq('id', edit.id).eq('updated_at', edit.updated_at) :
         articles().insert({id: edit.id, ...payload});
@@ -137,6 +148,11 @@ export function setupAnnouncements(client) {
         edit.published ? '公開を取り下げました。' : '下書きを保存しました。';
       closeEditor();
       byId('announcement-new').focus();
+    } catch {
+      if (request === revision) {
+        message.textContent = '保存を確認できませんでした。入力内容を保持したまま再試行できます。';
+      }
+      return;
     } finally {
       if (request === revision) {
         saving = false;
