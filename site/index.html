@@ -2,10 +2,10 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self' 'sha256-GefGfZ30UIN7HL/JGL/d2aeI3DdhcSIF7SEssaHNrzg='; connect-src 'self' https://cmlafkiwveixvrctnnlx.supabase.co; img-src 'self' data:">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="version" content="0.1.6">
+<meta name="version" content="0.1.7">
 <meta name="robots" content="noindex, nofollow">
 <title>従業員ポータル | VOCALINK-TEAM</title>
-<link rel="stylesheet" href="vl-ui.css?v=0.1.6">
+<link rel="stylesheet" href="vl-ui.css?v=0.1.7">
 <link rel="stylesheet" href="roles.css?v=0.1.5">
 <link rel="stylesheet" href="announcements.css?v=0.1.5">
 <style>
@@ -18,7 +18,7 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 @media(max-width:560px){.fields{grid-template-columns:1fr}.session{align-items:flex-start}header nav{min-height:0}}
 </style><meta name="referrer" content="strict-origin-when-cross-origin"></head>
 <body class="vl-ui">
-<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.6">v0.1.6</small></nav></div></header>
+<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.7">v0.1.7</small></nav></div></header>
 <main class="wrap">
 <h1>従業員ポータル</h1>
 <p id="portal-status" role="status">ログイン状態を確認しています。</p>
@@ -29,6 +29,10 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <div><label for="password">パスワード</label><input type="password" id="password" name="password" autocomplete="current-password" required></div>
 <button type="submit">ログイン</button>
 </form>
+<details>
+<summary>パスワードを忘れた場合</summary>
+<p>ポータルのOwnerに再設定リンクの発行を依頼してください。</p>
+</details>
 </section>
 <section id="password-setup" aria-labelledby="password-setup-heading" hidden>
 <h2 id="password-setup-heading">パスワードの初期設定</h2>
@@ -72,6 +76,16 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <details id="role-details"><summary>担当ロールを選ぶ</summary><div id="role-options"></div></details>
 <button type="submit">変更を保存</button>
 </form>
+<div id="reset-member" class="member-actions" hidden>
+<button type="button" id="reset-member-submit">パスワード再設定リンクを発行</button>
+<p id="reset-member-status" role="status"></p>
+<div id="reset-member-link-panel" hidden>
+<label for="reset-member-link">再設定リンク</label>
+<input type="url" id="reset-member-link" readonly>
+<button type="button" id="reset-member-copy">リンクをコピー</button>
+<button type="button" id="reset-member-clear">リンクを閉じる</button>
+</div>
+</div>
 </section>
 <section id="announcements" aria-labelledby="announcements-heading">
 <h2 id="announcements-heading">社内向けお知らせ</h2>
@@ -131,5 +145,5 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<script type="module" src="employee-portal.js?v=0.1.5"></script>
+<script type="module" src="employee-portal.js?v=0.1.7"></script>
 </body></html>

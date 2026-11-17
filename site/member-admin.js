@@ -1,4 +1,4 @@
-import { setupAccountCreation } from './account-setup.js?v=0.1.5';
+import { setupAccountCreation, setupPasswordReset } from './account-setup.js?v=0.1.7';
 
 const byId = id => document.getElementById(id);
 
@@ -18,6 +18,7 @@ export function setupMemberAdmin(client, projectUrl, publishableKey) {
   function showMember() {
     const member = members.get(memberSelect.value);
     form.hidden = !member;
+    passwordReset.show(member);
     if (!member) return;
     accessSelect.value = member.status || 'suspended';
     for (const input of options.querySelectorAll('input')) {
@@ -28,6 +29,7 @@ export function setupMemberAdmin(client, projectUrl, publishableKey) {
   async function loadMembers(selected, saved = false) {
     const request = ++revision;
     form.hidden = true;
+    passwordReset.show();
     reload.disabled = true;
     message.textContent = '一覧を読み込んでいます。';
     const {data, error} = await client.rpc('employee_owner_directory');
@@ -70,6 +72,7 @@ export function setupMemberAdmin(client, projectUrl, publishableKey) {
   }
 
   const creation = setupAccountCreation(client, projectUrl, publishableKey, loadMembers);
+  const passwordReset = setupPasswordReset(client, projectUrl, publishableKey, () => members.get(memberSelect.value));
 
   memberSelect.addEventListener('change', () => {
     message.textContent = '';
@@ -113,6 +116,7 @@ export function setupMemberAdmin(client, projectUrl, publishableKey) {
       details.open = false;
       byId('create-member-details').open = false;
       creation.clear();
+      passwordReset.show();
       members.clear();
       options.replaceChildren();
       memberSelect.replaceChildren();

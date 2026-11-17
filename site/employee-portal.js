@@ -1,6 +1,6 @@
 import { setupAnnouncements } from './announcements.js?v=0.1.3';
-import { setupMemberAdmin } from './member-admin.js?v=0.1.5';
-import { openPasswordSetup } from './account-setup.js?v=0.1.5';
+import { setupMemberAdmin } from './member-admin.js?v=0.1.7';
+import { openPasswordSetup } from './account-setup.js?v=0.1.7';
 import { projectUrl, publishableKey } from './portal-config.js';
 const byId = id => document.getElementById(id);
 const status = byId('portal-status');

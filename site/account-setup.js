@@ -1,5 +1,17 @@
 const byId = id => document.getElementById(id);
 
+async function requestAccountAction(client, projectUrl, publishableKey, body) {
+  const {data} = await client.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) return {ok: false, result: {code: 'session'}};
+  const response = await fetch(projectUrl + '/functions/v1/employee-create-account', {
+    method: 'POST',
+    headers: {Authorization: 'Bearer ' + token, apikey: publishableKey, 'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  return {ok: response.ok, result: await response.json().catch(() => null)};
+}
+
 export function setupAccountCreation(client, projectUrl, publishableKey, reloadMembers) {
   const form = byId('create-member-form');
   const email = byId('create-member-email');
@@ -39,23 +51,11 @@ export function setupAccountCreation(client, projectUrl, publishableKey, reloadM
     button.disabled = true;
     message.textContent = 'アカウントを作成しています。';
     try {
-      const auth = await client.auth.getSession();
+      const {ok, result} = await requestAccountAction(client, projectUrl, publishableKey, {email: email.value.trim()});
       if (current !== revision) return;
-      const token = auth.data.session?.access_token;
-      if (!token) {
-        message.textContent = 'ログインし直してください。';
-        return;
-      }
-      const response = await fetch(projectUrl + '/functions/v1/employee-create-account', {
-        method: 'POST',
-        headers: {Authorization: 'Bearer ' + token, apikey: publishableKey, 'Content-Type': 'application/json'},
-        body: JSON.stringify({email: email.value.trim()})
-      });
-      if (current !== revision) return;
-      const result = await response.json().catch(() => null);
-      if (current !== revision) return;
-      if (!response.ok || !result?.id) {
-        message.textContent = result?.code === 'exists' ? '既に登録済みです。一覧から選択してください。' :
+      if (!ok || !result?.id) {
+        message.textContent = result?.code === 'session' ? 'ログインし直してください。' :
+          result?.code === 'exists' ? '既に登録済みです。一覧から選択してください。' :
           'アカウントを作成できませんでした。一覧と入力内容を確認してください。';
         return;
       }
@@ -86,10 +86,76 @@ export function setupAccountCreation(client, projectUrl, publishableKey, reloadM
   };
 }
 
+export function setupPasswordReset(client, projectUrl, publishableKey, selectedMember) {
+  const section = byId('reset-member');
+  const submit = byId('reset-member-submit');
+  const panel = byId('reset-member-link-panel');
+  const link = byId('reset-member-link');
+  const message = byId('reset-member-status');
+  let revision = 0;
+
+  function clearLink() {
+    revision++;
+    panel.hidden = true;
+    link.value = '';
+    message.textContent = '';
+    submit.disabled = false;
+  }
+
+  byId('reset-member-copy').addEventListener('click', async () => {
+    if (panel.hidden || !link.value) return;
+    const current = revision;
+    try {
+      await navigator.clipboard.writeText(link.value);
+      if (current === revision) message.textContent = 'リンクをコピーしました。';
+    } catch {
+      if (current === revision) {
+        link.select();
+        message.textContent = '選択したリンクをコピーしてください。';
+      }
+    }
+  });
+  byId('reset-member-clear').addEventListener('click', clearLink);
+
+  submit.addEventListener('click', async () => {
+    const member = selectedMember();
+    if (section.hidden || submit.disabled || !panel.hidden || member?.status !== 'active' || !member.email) return;
+    const current = ++revision;
+    submit.disabled = true;
+    message.textContent = 'リンクを発行しています。';
+    try {
+      const {ok, result} = await requestAccountAction(client, projectUrl, publishableKey, {
+        action: 'reset_password', user_id: member.id
+      });
+      if (current !== revision) return;
+      if (!ok || !result?.reset_url) {
+        message.textContent = result?.code === 'session' ? 'ログインし直してください。' :
+          'リンクを発行できませんでした。対象の利用状態を確認してください。';
+        return;
+      }
+      link.value = result.reset_url;
+      panel.hidden = false;
+      message.textContent = member.email + ' の再設定リンクです。本人確認のうえ、個別に共有してください。';
+    } catch {
+      if (current === revision) message.textContent = 'リンクを取得できませんでした。時間をおいて再発行してください。';
+    } finally {
+      if (current === revision) submit.disabled = !panel.hidden;
+    }
+  });
+
+  return {
+    show(member) {
+      clearLink();
+      section.hidden = member?.status !== 'active' || !member.email;
+    }
+  };
+}
+
 export function openPasswordSetup(createClient, projectUrl, publishableKey, done) {
   const tokenParams = new URLSearchParams(location.hash.slice(1));
-  if (!tokenParams.has('setup')) return false;
-  const token = tokenParams.get('setup');
+  const isReset = tokenParams.has('reset');
+  if (!isReset && !tokenParams.has('setup')) return false;
+  const token = tokenParams.get(isReset ? 'reset' : 'setup');
   history.replaceState(history.state, '', location.pathname + location.search);
 
   const section = byId('password-setup');
@@ -102,11 +168,15 @@ export function openPasswordSetup(createClient, projectUrl, publishableKey, done
     auth: {storageKey: 'vocalink-employee-setup', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false}
   });
   let verified = false;
+  if (isReset) {
+    byId('password-setup-heading').textContent = 'パスワードの再設定';
+    submit.textContent = 'パスワードを再設定';
+  }
   section.hidden = false;
   byId('portal-status').textContent = '';
 
-  async function close() {
-    await setupClient.auth.signOut({scope: 'local'}).catch(() => {});
+  async function close(scope = 'local') {
+    await setupClient.auth.signOut({scope}).catch(() => {});
     form.reset();
     section.hidden = true;
     await done();
@@ -129,7 +199,8 @@ export function openPasswordSetup(createClient, projectUrl, publishableKey, done
       if (!verified) {
         const {data, error} = await setupClient.auth.verifyOtp({token_hash: token, type: 'recovery'});
         if (error || !data.session) {
-          message.textContent = '初期設定リンクを確認できません。リンクの期限や使用済みかをOwnerに確認してください。';
+          message.textContent = isReset ? '再設定リンクが無効か、期限が切れています。Ownerに再発行を依頼してください。' :
+            '初期設定リンクを確認できません。リンクの期限や使用済みかをOwnerに確認してください。';
           return;
         }
         verified = true;
@@ -139,8 +210,9 @@ export function openPasswordSetup(createClient, projectUrl, publishableKey, done
         message.textContent = 'パスワードを設定できませんでした。入力内容を確認して、もう一度お試しください。';
         return;
       }
-      await close();
-      if (!byId('login').hidden) byId('portal-status').textContent = '設定したパスワードでログインしてください。';
+      await close(isReset ? 'global' : 'local');
+      byId('portal-status').textContent = byId('login').hidden ? 'パスワードを設定しました。' :
+        '設定したパスワードでログインしてください。';
     } catch {
       message.textContent = '設定結果を確認できませんでした。時間をおいてお試しください。';
     } finally {

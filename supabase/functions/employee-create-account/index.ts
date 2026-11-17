@@ -7,9 +7,12 @@ const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const auth = {persistSession: false, autoRefreshToken: false, detectSessionInUrl: false};
 const service = createClient(url, serviceKey, {auth});
 
+const userClient = (token: string) =>
+  createClient(url, anonKey, {auth, global: {headers: {Authorization: 'Bearer ' + token}}});
+
 Deno.serve(accountHandler({
   async identifyOwner(token: string) {
-    const client = createClient(url, anonKey, {auth, global: {headers: {Authorization: 'Bearer ' + token}}});
+    const client = userClient(token);
     const identity = await client.auth.getUser(token);
     if (identity.error || !identity.data.user) return null;
     const profile = await client.rpc('employee_portal_profile');
@@ -26,8 +29,15 @@ Deno.serve(accountHandler({
       code: error?.code === 'email_exists' || error?.code === 'user_already_exists' ? 'exists' : 'create_failed'
     };
   },
-  async issueSetupToken(email: string) {
+  async findResetTarget(token: string, userId: string) {
+    const {data, error} = await userClient(token).rpc('employee_owner_directory');
+    if (error) throw new Error('Directory unavailable');
+    const member = data?.members?.find((entry: {id: string; status: string}) =>
+      entry.id === userId && entry.status === 'active');
+    return member?.email ?? null;
+  },
+  async issueSetupToken(email: string, userId: string) {
     const {data, error} = await service.auth.admin.generateLink({type: 'recovery', email});
-    return error ? null : data.properties.hashed_token;
+    return error || data.user?.id !== userId ? null : data.properties.hashed_token;
   }
 }));
