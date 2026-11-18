@@ -30,6 +30,8 @@
 
 Ownerは「経費申請一覧」で全メンバーの申請を新しい順に閲覧できます。各行を開くと、申請日時、支払先、用途、証憑のファイル名・管理番号を確認できます。Ownerは申請を承認するか、理由を入力して差し戻せます。支払いが完了したら承認済みの申請を「精算済み」にします。
 
+「月別集計」は支払日が選択した月に入る申請を集計します。未精算には申請済み・承認済み・差し戻しを含みます。CSVは同じ支払月の精算済み明細を出力します。各申請の「変更履歴」では、この機能の追加以降の承認・差し戻し・再申請・精算済みへの変更を確認できます。
+
 ## お知らせをDiscordへ通知する
 
 1. 専用Supabaseに [通知用SQL](../db/announcement_discord.sql) を適用します。続けて [本文配信用SQL](../db/announcement_discord_content.sql) と [メンション用SQL](../db/announcement_discord_mentions.sql) を適用し、最後に [配信状況用SQL](../db/announcement_discord_status.sql) を適用し、[公開範囲用SQL](../db/announcement_audience.sql) を適用します。前提は `db/announcements.sql` の適用です。

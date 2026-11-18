@@ -1,4 +1,4 @@
-import { expenseStatusLabel, setupOwnerExpenses } from './owner-expenses.js?v=0.1.9';
+import { expenseStatusLabel, setupOwnerExpenses } from './owner-expenses.js?v=0.1.14';
 import { setupAnnouncements } from './announcements.js?v=0.1.13';
 import { setupMemberAdmin } from './member-admin.js?v=0.1.7';
 import { openPasswordSetup } from './account-setup.js?v=0.1.7';

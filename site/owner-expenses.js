@@ -1,3 +1,5 @@
+import { setupExpenseReport } from './expense-report.js?v=0.1.14';
+
 const PAGE_SIZE = 20;
 
 const statusLabels = {
@@ -21,6 +23,7 @@ export function setupOwnerExpenses(client, currency, onChanged) {
   const previous = byId('owner-expense-previous');
   const next = byId('owner-expense-next');
   const labels = new Map([...byId('category').options].map(option => [option.value, option.textContent]));
+  const report = setupExpenseReport(client, currency, labels);
   let cursors = [null];
   let currentPage = 0;
   let nextCursor = null;
@@ -57,12 +60,49 @@ export function setupOwnerExpenses(client, currency, onChanged) {
       reason.textContent = expense.return_reason;
       fields.append(term, reason);
     }
-    details.append(summary, fields);
+    details.append(summary, fields, historyPanel(expense.id));
     if (expense.status === 'submitted' || expense.status === 'approved') {
       details.append(reviewControls(expense, item));
     }
     item.append(details);
     return item;
+  }
+
+  function historyPanel(expenseId) {
+    const panel = document.createElement('details');
+    const heading = document.createElement('summary');
+    heading.textContent = '変更履歴';
+    const result = document.createElement('div');
+    panel.append(heading, result);
+    let loading = false;
+    let loaded = false;
+    panel.addEventListener('toggle', async () => {
+      if (!panel.open || loading || loaded) return;
+      loading = true;
+      result.textContent = '変更履歴を読み込んでいます。';
+      try {
+        const {data, error} = await client.rpc('employee_owner_expense_history', {target_expense: expenseId});
+        if (!panel.isConnected || section.hidden) return;
+        if (error || !data) throw new Error('Expense history unavailable');
+        result.textContent = data.length ? '' : '記録された変更はありません。';
+        for (const entry of data) {
+          const line = document.createElement('p');
+          line.textContent = [
+            submittedInJapan.format(new Date(entry.changed_at)),
+            entry.actor_email || '操作者の記録なし',
+            expenseStatusLabel(entry.previous_status) + ' → ' + expenseStatusLabel(entry.new_status),
+            entry.return_reason
+          ].filter(Boolean).join(' ／ ');
+          result.append(line);
+        }
+        loaded = true;
+      } catch {
+        if (panel.isConnected) result.textContent = '変更履歴を取得できませんでした。閉じてから開き直してください。';
+      } finally {
+        loading = false;
+      }
+    });
+    return panel;
   }
 
   function reviewControls(expense, item) {
@@ -124,6 +164,7 @@ export function setupOwnerExpenses(client, currency, onChanged) {
         status.textContent = '申請を「' + expenseStatusLabel(data.status) + '」に更新しました。';
         updated.querySelector('summary')?.focus();
         void onChanged();
+        void report.refresh();
       } catch {
         if (request === revision) result.textContent = '保存結果を確認できませんでした。一覧を更新して確認してください。';
       } finally {
@@ -173,7 +214,10 @@ export function setupOwnerExpenses(client, currency, onChanged) {
     }
   }
 
-  refresh.addEventListener('click', () => load(0, null));
+  refresh.addEventListener('click', () => {
+    void load(0, null);
+    void report.refresh();
+  });
   previous.addEventListener('click', () => {
     if (currentPage > 0) void load(currentPage - 1, cursors[currentPage - 1]);
   });
@@ -184,9 +228,10 @@ export function setupOwnerExpenses(client, currency, onChanged) {
   return {
     open() {
       section.hidden = false;
-      return load(0, null);
+      return Promise.all([load(0, null), report.open()]);
     },
     clear() {
+      report.clear();
       revision++;
       saving = false;
       section.hidden = true;

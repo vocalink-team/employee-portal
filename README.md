@@ -1,4 +1,4 @@
-# VOCALINK-TEAM 従業員ポータル v0.1.13
+# VOCALINK-TEAM 従業員ポータル v0.1.14
 
 Ownerによるアカウント追加とパスワード再設定リンクの発行、経費申請マニュアル、申請フォーム、本人の履歴、Owner向けの経費申請一覧と承認・精算管理、社内向けお知らせと部署・ロール別公開、Ownerによるメンバーと担当ロールの管理を含みます。画面のファイルは `site/` にあります。GitHub Pagesでは `main` のルートの入口から `site/` を開きます。
 
@@ -6,7 +6,7 @@ Ownerによるアカウント追加とパスワード再設定リンクの発行
 
 ## 専用DBと認証の設定
 
-1. 新規の専用Supabaseプロジェクトでは、`db/bootstrap.sql`、`db/roles.sql`、`db/announcements.sql`、`db/manual.sql`、`db/owner_expenses.sql`、`db/expense_workflow.sql` の順に適用します。すでに適用したSQLは再実行しません。
+1. 新規の専用Supabaseプロジェクトでは、`db/bootstrap.sql`、`db/roles.sql`、`db/announcements.sql`、`db/manual.sql`、`db/owner_expenses.sql`、`db/expense_workflow.sql`、`db/expense_reporting.sql` の順に適用します。すでに適用したSQLは再実行しません。
 2. Supabase Authで公開サインアップを無効にし、運営が認めた利用者のアカウントを発行します。最初のOwnerにするAuthユーザーのUUIDを確認し、管理者として以下を実行します。UUIDは2か所とも置き換えてください。
 3. Ownerでログインし、「メンバーとロールの管理」で発行済みアカウントに利用状態と担当ロールを設定します。複数ロールを割り当てられます。Owner以外のロールで利用できる機能は、マニュアル、経費申請、本人の履歴、公開済みのお知らせです。
 4. `site/portal-config.js` の接続先と公開用キーを確認します。AuthのサイトURLを公開URLに合わせます。公開リポジトリに秘密鍵や従業員のデータを保存しないでください。
