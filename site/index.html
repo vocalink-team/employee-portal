@@ -2,12 +2,12 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self' 'sha256-GefGfZ30UIN7HL/JGL/d2aeI3DdhcSIF7SEssaHNrzg='; connect-src 'self' https://cmlafkiwveixvrctnnlx.supabase.co; img-src 'self' data:">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="version" content="0.1.12">
+<meta name="version" content="0.1.13">
 <meta name="robots" content="noindex, nofollow">
 <title>従業員ポータル | VOCALINK-TEAM</title>
 <link rel="stylesheet" href="vl-ui.css?v=0.1.7">
 <link rel="stylesheet" href="roles.css?v=0.1.5">
-<link rel="stylesheet" href="announcements.css?v=0.1.5">
+<link rel="stylesheet" href="announcements.css?v=0.1.13">
 <link rel="stylesheet" href="owner-expenses.css?v=0.1.9">
 <style>
 *{box-sizing:border-box}body{margin:0;min-height:100vh}.wrap{width:min(100% - 36px,860px);margin-inline:auto}header nav,.session{display:flex;align-items:center;justify-content:space-between;gap:12px}main{padding-block:12px 64px}h1{font-size:clamp(26px,5vw,40px);margin-block:0 18px}h2{font-size:22px;margin-block:0 14px}
@@ -19,7 +19,7 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 @media(max-width:560px){.fields{grid-template-columns:1fr}.session{align-items:flex-start}header nav{min-height:0}}
 </style><meta name="referrer" content="strict-origin-when-cross-origin"></head>
 <body class="vl-ui">
-<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.12">v0.1.12</small></nav></div></header>
+<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.13">v0.1.13</small></nav></div></header>
 <main class="wrap">
 <h1>従業員ポータル</h1>
 <p id="portal-status" role="status">ログイン状態を確認しています。</p>
@@ -99,7 +99,20 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <h3 id="announcement-form-heading">お知らせを作成</h3>
 <div><label for="announcement-title">タイトル</label><input id="announcement-title" maxlength="120" required></div>
 <div><label for="announcement-body">本文</label><textarea id="announcement-body" maxlength="6000" required></textarea></div>
-<details>
+<div>
+<label for="announcement-audience-mode">公開範囲</label>
+<select id="announcement-audience-mode">
+<option value="all">全メンバー</option>
+<option value="restricted">部署・ロールを指定</option>
+</select>
+</div>
+<div id="announcement-audience-targets" hidden>
+<p>選んだ部署・ロールのいずれかに所属するメンバーに公開します。限定公開はDiscordに送信されません。すでに送信したDiscord投稿は、公開範囲を変更しても残ります。</p>
+<p id="announcement-audience-status" role="status"></p>
+<details><summary>部署を選ぶ</summary><div id="announcement-audience-departments"></div></details>
+<details><summary>ロールを選ぶ</summary><div id="announcement-audience-roles"></div></details>
+</div>
+<details id="announcement-discord-mentions">
 <summary>Discordのメンションを指定</summary>
 <p id="announcement-mention-help">初回公開時のみ通知します。IDをカンマまたは空白で区切り、各欄に10件まで指定できます。</p>
 <div><label for="announcement-discord-users">ユーザーID（任意）</label><input type="text" id="announcement-discord-users" maxlength="320" autocomplete="off" aria-describedby="announcement-mention-help"></div>
@@ -173,5 +186,5 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<script type="module" src="employee-portal.js?v=0.1.12"></script>
+<script type="module" src="employee-portal.js?v=0.1.13"></script>
 </body></html>

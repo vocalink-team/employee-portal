@@ -9,6 +9,7 @@ const deliveryLabels = {
   failed: '失敗',
   not_configured: '未送信（Webhook未設定）',
   skipped_existing: '通知対象外',
+  skipped_restricted: '未送信（限定公開）',
   withdrawn: '未送信（公開取り下げ）'
 };
 
@@ -45,6 +46,11 @@ export function setupAnnouncements(client) {
   const body = byId('announcement-body');
   const users = byId('announcement-discord-users');
   const roles = byId('announcement-discord-roles');
+  const audienceMode = byId('announcement-audience-mode');
+  const audienceTargets = byId('announcement-audience-targets');
+  const audienceDepartments = byId('announcement-audience-departments');
+  const audienceRoles = byId('announcement-audience-roles');
+  const audienceStatus = byId('announcement-audience-status');
   const message = byId('announcement-status');
   const list = byId('announcement-list');
   const back = byId('announcement-back');
@@ -60,6 +66,55 @@ export function setupAnnouncements(client) {
   let saving = false;
   let revision = 0;
   let linkedFocused = false;
+  let audienceOptions = null;
+  let sessionRevision = 0;
+
+  function addAudienceOption(container, value, labelText, selected) {
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = value;
+    checkbox.checked = selected.includes(value);
+    label.append(checkbox, ' ' + labelText);
+    container.append(label);
+  }
+
+  function showAudienceMode() {
+    const restricted = audienceMode.value === 'restricted';
+    audienceTargets.hidden = !restricted;
+    byId('announcement-discord-mentions').hidden = restricted;
+  }
+
+  function renderAudienceOptions() {
+    showAudienceMode();
+    audienceDepartments.replaceChildren();
+    audienceRoles.replaceChildren();
+    audienceStatus.textContent = audienceOptions ? '' : '公開先の候補を取得できません。ページを再読み込みしてください。';
+    if (!audienceOptions) return;
+    const selected = edit?.audience;
+    for (const department of new Set(audienceOptions.map(role => role.department))) {
+      addAudienceOption(audienceDepartments, department, department, selected?.departments ?? []);
+    }
+    for (const role of audienceOptions) {
+      addAudienceOption(audienceRoles, role.role_key, role.department + ' ／ ' + role.label, selected?.roles ?? []);
+    }
+  }
+
+  const checkedTargets = container => [...container.querySelectorAll('input:checked')].map(input => input.value);
+
+  async function loadAudienceOptions() {
+    const session = sessionRevision;
+    try {
+      const {data, error} = await client.rpc('employee_announcement_audience_options');
+      if (session !== sessionRevision || error || !data) return;
+      audienceOptions = data;
+      if (!form.hidden) renderAudienceOptions();
+    } catch {
+      // The editor shows a retry instruction if target choices are unavailable.
+    }
+  }
+
+  audienceMode.addEventListener('change', showAudienceMode);
 
   function closeEditor() {
     form.hidden = true;
@@ -69,7 +124,13 @@ export function setupAnnouncements(client) {
 
   function editArticle(article, trigger) {
     if (!owner || saving) return;
+    if (article && !article.audience) {
+      message.textContent = '公開範囲を確認できませんでした。「配信状況を更新」を押してから編集してください。';
+      return;
+    }
     edit = article ?? {};
+    audienceMode.value = article?.audience?.restricted ? 'restricted' : 'all';
+    renderAudienceOptions();
     byId('announcement-form-heading').textContent = article ? 'お知らせを編集' : 'お知らせを作成';
     title.value = article?.title ?? '';
     body.value = article?.body ?? '';
@@ -154,20 +215,28 @@ export function setupAnnouncements(client) {
 
     if (!owner || !displayed.length) return;
     let result;
+    let audiences;
+    const announcementIds = displayed.map(article => article.id);
     try {
-      result = await client.rpc('employee_announcement_delivery_status', {
-        announcement_ids: displayed.map(article => article.id)
-      });
+      [result, audiences] = await Promise.all([
+        client.rpc('employee_announcement_delivery_status', {announcement_ids: announcementIds}),
+        client.rpc('employee_announcement_audiences', {announcement_ids: announcementIds})
+      ]);
     } catch {
       result = {error: true};
     }
     if (request !== revision) return;
     const deliveries = new Map((result.data ?? []).map(row => [row.announcement_id, row]));
+    const audienceById = new Map((audiences?.data ?? []).map(row => [row.announcement_id, row]));
     displayed.forEach((article, index) => {
+      article.audience = audienceById.get(article.id);
       const row = deliveries.get(article.id);
       const delivery = elements[index].delivery;
       delivery.textContent = 'Discord配信：' + (result.error ? '取得できませんでした' :
         deliveryLabels[row?.state] ?? (article.published ? '配信記録なし' : '未公開'));
+      if (article.audience) {
+        delivery.append(article.audience.restricted ? ' ／ 限定公開' : ' ／ 全メンバー');
+      }
       if (discordMessageUrl.test(row?.discord_message_url ?? '')) {
         const link = document.createElement('a');
         link.href = row.discord_message_url;
@@ -190,7 +259,10 @@ export function setupAnnouncements(client) {
     else title.focus();
   });
   reload.addEventListener('click', () => {
-    if (!saving && form.hidden) void load();
+    if (!saving && form.hidden) {
+      if (!audienceOptions) void loadAudienceOptions();
+      void load();
+    }
   });
   previous.addEventListener('click', () => go(-1));
   next.addEventListener('click', () => go(1));
@@ -203,11 +275,19 @@ export function setupAnnouncements(client) {
       message.textContent = 'タイトルと本文を入力してください。';
       return;
     }
+    payload.audience_restricted = audienceMode.value === 'restricted';
     try {
-      payload.discord_user_ids = discordIds(users.value, 'user');
-      payload.discord_role_ids = discordIds(roles.value, 'role');
+      payload.discord_user_ids = payload.audience_restricted ? [] : discordIds(users.value, 'user');
+      payload.discord_role_ids = payload.audience_restricted ? [] : discordIds(roles.value, 'role');
     } catch {
       message.textContent = 'DiscordのユーザーIDとロールIDを確認してください。各欄に10件まで指定できます。';
+      return;
+    }
+    payload.audience_departments = payload.audience_restricted ? checkedTargets(audienceDepartments) : [];
+    payload.audience_roles = payload.audience_restricted ? checkedTargets(audienceRoles) : [];
+    if (payload.audience_restricted && (!audienceOptions ||
+      !(payload.audience_departments.length || payload.audience_roles.length))) {
+      message.textContent = '限定公開の対象となる部署またはロールを選択してください。';
       return;
     }
     saving = true;
@@ -224,10 +304,15 @@ export function setupAnnouncements(client) {
       let {data, error} = await query.select('id').maybeSingle();
       if (request !== revision) return;
       if (error || !data) {
-        const check = await articles().select('id,title,body,published,' + mentionFields).eq('id', edit.id).maybeSingle();
+        const [check, audiences] = await Promise.all([
+          articles().select('id,title,body,published,' + mentionFields).eq('id', edit.id).maybeSingle(),
+          client.rpc('employee_announcement_audiences', {announcement_ids: [edit.id]})
+        ]);
         if (request !== revision) return;
-        data = check.data;
-        if (check.error || !data || Object.entries(payload).some(([key, value]) => (
+        const current = audiences.data?.[0];
+        data = check.data && current && {...check.data, audience_restricted: current.restricted,
+          audience_departments: current.departments, audience_roles: current.roles};
+        if (check.error || audiences.error || !data || Object.entries(payload).some(([key, value]) => (
           Array.isArray(value) ? JSON.stringify(data[key]) !== JSON.stringify(value) : data[key] !== value
         ))) {
           message.textContent = !error && data ? '別の操作で内容が更新されました。ページを再読み込みして確認してください。' :
@@ -258,10 +343,13 @@ export function setupAnnouncements(client) {
     open(isOwner) {
       owner = isOwner;
       admin.hidden = !owner;
+      if (owner) void loadAudienceOptions();
       return load();
     },
     clear() {
       revision++;
+      sessionRevision++;
+      audienceOptions = null;
       owner = false;
       saving = false;
       page = 0;

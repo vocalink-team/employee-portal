@@ -25,14 +25,14 @@
 
 ## お知らせと経費申請
 
-- Ownerは「社内向けお知らせ」で下書き・公開・取り下げを行います。公開すると在籍中のアカウントが閲覧できます。
+- Ownerは「社内向けお知らせ」で下書き・公開・取り下げを行います。「全メンバー」または部署・ロールを指定して公開します。限定公開の対象は、現在割り当てられている部署・ロールのいずれかに一致する在籍メンバーです。Ownerはすべて閲覧できます。限定公開はDiscordへ送信しません。公開範囲を後から絞っても、それまでにDiscordで公開された投稿はDiscord側に残ります。
 - 申請者は経費を入力し、送信後に「自分の申請履歴」で状態を確認します。差し戻された場合は、理由を確認して「修正して再申請」を選びます。領収書の本体は、運営が指定する保存先に保管します。
 
 Ownerは「経費申請一覧」で全メンバーの申請を新しい順に閲覧できます。各行を開くと、申請日時、支払先、用途、証憑のファイル名・管理番号を確認できます。Ownerは申請を承認するか、理由を入力して差し戻せます。支払いが完了したら承認済みの申請を「精算済み」にします。
 
 ## お知らせをDiscordへ通知する
 
-1. 専用Supabaseに [通知用SQL](../db/announcement_discord.sql) を適用します。続けて [本文配信用SQL](../db/announcement_discord_content.sql) と [メンション用SQL](../db/announcement_discord_mentions.sql) を適用し、最後に [配信状況用SQL](../db/announcement_discord_status.sql) を適用します。前提は `db/announcements.sql` の適用です。
+1. 専用Supabaseに [通知用SQL](../db/announcement_discord.sql) を適用します。続けて [本文配信用SQL](../db/announcement_discord_content.sql) と [メンション用SQL](../db/announcement_discord_mentions.sql) を適用し、最後に [配信状況用SQL](../db/announcement_discord_status.sql) を適用し、[公開範囲用SQL](../db/announcement_audience.sql) を適用します。前提は `db/announcements.sql` の適用です。
 2. Discordの社内通知チャンネルで「チャンネルを編集」→「連携サービス」→「ウェブフック」からWebhookを作成し、URLをコピーします。
 3. [専用Supabaseの連携設定](https://supabase.com/dashboard/project/cmlafkiwveixvrctnnlx/integrations) →「Vault」→「Secrets」で、名前を `employee_portal_discord_webhook`、値をコピーしたWebhook URLとして保存します。Webhook URLはVaultに直接入力します。
 4. Ownerが新しいお知らせを公開し、Discordにタイトル・本文・ポータルのリンクが届くことを確認します。配信処理は15秒間隔です。
