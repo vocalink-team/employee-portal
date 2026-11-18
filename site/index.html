@@ -2,7 +2,7 @@
 <html lang="ja"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'self' https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js; style-src 'self' 'sha256-GefGfZ30UIN7HL/JGL/d2aeI3DdhcSIF7SEssaHNrzg='; connect-src 'self' https://cmlafkiwveixvrctnnlx.supabase.co; img-src 'self' data:">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="version" content="0.1.11">
+<meta name="version" content="0.1.12">
 <meta name="robots" content="noindex, nofollow">
 <title>従業員ポータル | VOCALINK-TEAM</title>
 <link rel="stylesheet" href="vl-ui.css?v=0.1.7">
@@ -19,7 +19,7 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 @media(max-width:560px){.fields{grid-template-columns:1fr}.session{align-items:flex-start}header nav{min-height:0}}
 </style><meta name="referrer" content="strict-origin-when-cross-origin"></head>
 <body class="vl-ui">
-<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.11">v0.1.11</small></nav></div></header>
+<header><div class="wrap"><nav class="portal-header" aria-label="従業員ポータル"><a class="logo" href="./">vocalink<span>-team</span></a><small class="portal-version" aria-label="バージョン 0.1.12">v0.1.12</small></nav></div></header>
 <main class="wrap">
 <h1>従業員ポータル</h1>
 <p id="portal-status" role="status">ログイン状態を確認しています。</p>
@@ -91,7 +91,10 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 <section id="announcements" aria-labelledby="announcements-heading">
 <h2 id="announcements-heading">社内向けお知らせ</h2>
 <div id="announcement-admin" hidden>
+<div class="announcement-actions">
 <button type="button" id="announcement-new">お知らせを作成</button>
+<button type="button" id="announcement-delivery-reload">配信状況を更新</button>
+</div>
 <form id="announcement-form" hidden>
 <h3 id="announcement-form-heading">お知らせを作成</h3>
 <div><label for="announcement-title">タイトル</label><input id="announcement-title" maxlength="120" required></div>
@@ -110,6 +113,7 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </form>
 </div>
 <p id="announcement-status" role="status"></p>
+<p id="announcement-back" hidden><a href="./#announcements">お知らせ一覧に戻る</a></p>
 <div id="announcement-list"></div>
 <div id="announcement-pages" class="announcement-actions" hidden>
 <button type="button" id="announcement-prev">前へ</button>
@@ -169,5 +173,5 @@ input,select,textarea,button{font:inherit;min-height:44px;padding:8px 12px;borde
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js" integrity="sha384-TcHRA3zBbn+Lexh5n+Oil4guNPOS3rjNDpGRAN46u/s/mB2IZ50ceC6TYDU2yvgK" crossorigin="anonymous"></script>
-<script type="module" src="employee-portal.js?v=0.1.11"></script>
+<script type="module" src="employee-portal.js?v=0.1.12"></script>
 </body></html>
